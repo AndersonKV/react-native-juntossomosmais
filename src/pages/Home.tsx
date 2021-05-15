@@ -1,32 +1,27 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useState, useRef} from 'react';
 import {
   StyleSheet,
   Text,
   View,
-  Image,
   TouchableOpacity,
   Dimensions,
-  Alert,
   FlatList,
-  StatusBar,
-  Button,
-  SafeAreaView,
   TextInput,
-  ScrollView,
+  Animated,
 } from 'react-native';
 
 import {DataProps} from '../types/types';
-import {faSearch} from '@fortawesome/free-solid-svg-icons';
+import {faSearch, faArrowDown} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import BouncyCheckbox from 'react-native-bouncy-checkbox';
 import api from '../services/index';
+import {styles} from './styles';
 
 //COMPONENTS
 import Pagination from '../components/Pagination';
 
 interface Props {
   selected: string;
-  arrPerson: any;
 }
 
 function Home() {
@@ -38,6 +33,8 @@ function Home() {
   const [len, setLen] = useState<number>();
   const [state, setState] = useState<String[]>();
   const [checkedState, SetCheckedState] = useState<Props[]>();
+  const [stateSelected, setStateSelected] = useState<string>();
+  const [modal, setModal] = useState(false);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -50,16 +47,29 @@ function Home() {
         'Bahia',
       ];
 
-      const {data} = await api.get(`results?&_page=${page}&_limit=10`);
+      try {
+        const {data} = await api.get(`results?&_page=${page}&_limit=10`);
 
-      console.log(data.length);
-      setDataPerson(data);
+        console.log(data.length);
+        setStateSelected('por todos');
+        setLen(data.length);
+        setDataPerson(data);
+      } catch (err) {
+        console.log(err);
+      }
+
       setState(arrState);
+
       setLoading(true);
     }
     init();
   }, []);
 
+  async function fetchData(settingPage: string) {
+    const {data} = await api.get(`results?&_page=${settingPage}&_limit=10`);
+    setDataPerson(data);
+    setPage(Number(settingPage));
+  }
   async function handleCheckBox(text: string) {
     if (checkedState && checkedState?.length > 0) {
       let arr: Props[] = [];
@@ -88,51 +98,94 @@ function Home() {
       SetCheckedState([{selected: text}]);
     }
   }
+
+  async function handleFetchMore(index: number) {
+    fetchData(index.toString());
+  }
+
+  const SelectedBox = () => {
+    const arr: String[] = ['por todos', 'por homens', 'por mulheres'];
+
+    return (
+      <TouchableOpacity
+        onPress={() => setModal(!modal)}
+        style={
+          modal === true
+            ? styles.screenCheckBoxOpen
+            : styles.screenCheckBoxClose
+        }>
+        <FlatList
+          keyExtractor={(_, index) => index.toString()}
+          data={arr}
+          style={styles.modalOpenText}
+          renderItem={({item}) => (
+            <TouchableOpacity
+              onPress={() => {
+                setModal(!modal);
+                modal === true ? setStateSelected(String(item)) : null;
+              }}
+              style={
+                modal === false
+                  ? item === stateSelected
+                    ? styles.checkBoxSelected
+                    : styles.checkBox
+                  : styles.modalOpenCheckBoxSelected
+              }>
+              <Text
+                style={
+                  modal === true ? styles.modalOpenText : styles.modalCloseText
+                }>
+                {item}
+              </Text>
+              <Text>
+                {modal === false ? (
+                  <FontAwesomeIcon icon={faArrowDown} size={14} color="black" />
+                ) : null}
+              </Text>
+            </TouchableOpacity>
+          )}
+        />
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <View
       style={{
         padding: 17,
         backgroundColor: 'whitesmoke',
-        justifyContent: 'center',
+        borderWidth: 3,
+        flex: 1,
       }}>
       {loading === true ? (
         <>
-          <View
-            style={{
-              borderColor: 'rgba(211, 211, 211, 0.827)',
-              borderWidth: 1,
-              flexDirection: 'row',
-              borderRadius: 25,
-            }}>
-            <TouchableOpacity
-              style={{
-                width: '10%',
-                backgroundColor: 'white',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderTopLeftRadius: 30,
-                borderBottomLeftRadius: 30,
-              }}>
+          <View style={styles.mainGrid}>
+            <TouchableOpacity style={styles.inputIcon}>
               <FontAwesomeIcon icon={faSearch} size={15} color="black" />
             </TouchableOpacity>
-
-            <TextInput
-              placeholder="Buscar..."
-              style={{
-                backgroundColor: 'white',
-                width: '90%',
-                borderTopRightRadius: 30,
-                borderBottomRightRadius: 30,
-              }}
-            />
+            <TextInput placeholder="Buscar..." style={styles.input} />
           </View>
+
+          <SelectedBox />
+
           <View
-            style={{paddingVertical: 10, borderColor: 'red', borderWidth: 3}}>
+            style={{
+              marginVertical: 10,
+              padding: 5,
+              borderColor: '#d3d3d3',
+              borderBottomWidth: 2,
+              backgroundColor: '#fff',
+            }}>
             <FlatList
               keyExtractor={(item, index) => index.toString()}
               data={state}
+              numColumns={2}
               renderItem={({item}) => (
-                <View style={{paddingVertical: 5}}>
+                <View
+                  style={{
+                    paddingVertical: 5,
+                    flex: 1,
+                  }}>
                   <BouncyCheckbox
                     size={25}
                     fillColor="gray"
@@ -149,9 +202,19 @@ function Home() {
               )}
             />
           </View>
-          {dataPerson && dataPerson?.length > 0 ? (
-            <Pagination imageHeight={imageHeight} arrPerson={dataPerson} />
-          ) : null}
+          {dataPerson && dataPerson?.length > 0 && len !== undefined ? (
+            <Pagination
+              imageHeight={imageHeight}
+              arrPerson={dataPerson}
+              len={len}
+              page={page}
+              handleFetchMore={handleFetchMore}
+            />
+          ) : (
+            <View style={styles.listNotShow}>
+              <Text>Nenhuma lista a ser exibida</Text>
+            </View>
+          )}
         </>
       ) : (
         <View>
