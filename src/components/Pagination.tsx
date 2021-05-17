@@ -11,76 +11,32 @@ import {
 import {DataProps} from '../types/types';
 
 interface Props {
-  arrPerson: DataProps[];
   imageHeight: number;
   page: number;
   len: number;
-  handleFetchMore: (value: number) => void;
+  handleFetchMore: (arg: number, arg2: string) => void;
+  stateSelected: string;
 }
 
 function Pagination({
-  arrPerson,
   imageHeight,
   page,
   len,
   handleFetchMore,
+  stateSelected,
 }: Props) {
   return (
-    <View style={{...styles.gridView}}>
-      <FlatList
-        keyExtractor={(item, index) => index.toString()}
-        data={arrPerson}
-        numColumns={2}
-        style={{borderColor: '#d3d3d3', borderRightWidth: 5}}
-        renderItem={({item, index}) => (
-          <TouchableOpacity
-            key={index}
-            style={{
-              borderWidth: 1,
-              alignItems: 'center',
-              borderColor: '#d3d3d3',
-              backgroundColor: '#fff',
-              flex: 1,
-              paddingVertical: 10,
-              marginVertical: 5,
-              marginHorizontal: 5,
-            }}>
-            <Image
-              style={{
-                width: 80,
-                height: 80,
-                borderWidth: 1,
-                borderRadius: 50,
-                alignItems: 'center',
-              }}
-              resizeMode={'contain'}
-              source={{
-                uri: `${item.picture.large}`,
-              }}
-            />
-            <View style={{alignItems: 'center'}}>
-              <Text style={{fontSize: 20, fontWeight: 'bold'}}>
-                {item.name.first}
-              </Text>
-              <Text>{item.location.street}</Text>
-              <Text>{item.location.state}</Text>
-              <Text>CEP - {item.location.postcode}</Text>
-            </View>
-          </TouchableOpacity>
-        )}
-      />
-      <View style={styles.paginationView}>
-        {Array.from({length: Number(len)}, (_, index) => (
-          <TouchableOpacity
-            key={index.toString()}
-            onPress={() => handleFetchMore(Number(index + 1))}
-            style={page - 1 === index ? styles.buttonActive : styles.button}>
-            <Text style={page - 1 === index ? styles.textActive : styles.text}>
-              {index + 1}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
+    <View style={styles.paginationView}>
+      {Array.from({length: Number(len)}, (_, index) => (
+        <TouchableOpacity
+          key={index.toString()}
+          onPress={() => handleFetchMore(index + 1, stateSelected)}
+          style={page - 1 === index ? styles.buttonActive : styles.button}>
+          <Text style={page - 1 === index ? styles.textActive : styles.text}>
+            {index + 1}
+          </Text>
+        </TouchableOpacity>
+      ))}
     </View>
   );
 }
@@ -96,6 +52,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 15,
+    flexWrap: 'wrap',
   },
   buttonActive: {
     backgroundColor: '#000',
@@ -116,4 +73,5 @@ const styles = StyleSheet.create({
     color: '#000',
   },
 });
+
 export default Pagination;

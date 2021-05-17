@@ -1,17 +1,15 @@
-import React, {useEffect, useState, useRef} from 'react';
+import React, {useEffect, useState} from 'react';
 import {
-  StyleSheet,
   Text,
   View,
   TouchableOpacity,
   Dimensions,
   FlatList,
   TextInput,
-  Animated,
 } from 'react-native';
 
 import {DataProps} from '../types/types';
-import {faSearch, faArrowDown} from '@fortawesome/free-solid-svg-icons';
+import {faSearch} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import BouncyCheckbox from 'react-native-bouncy-checkbox';
 import api from '../services/index';
@@ -19,6 +17,8 @@ import {styles} from './styles';
 
 //COMPONENTS
 import Pagination from '../components/Pagination';
+import SelectBox from '../components/SelectBox';
+import Users from '../components/Users';
 
 interface Props {
   selected: string;
@@ -29,47 +29,105 @@ function Home() {
   const imageHeight = Math.round((dimensions.height * 9) / 16);
   const imageWidth = Math.round((dimensions.width * 9) / 16);
   const [dataPerson, setDataPerson] = useState<DataProps[]>();
+  const [inputState, setInputState] = useState<string>('');
   const [page, setPage] = useState(1);
   const [len, setLen] = useState<number>();
   const [state, setState] = useState<String[]>();
   const [checkedState, SetCheckedState] = useState<Props[]>();
-  const [stateSelected, setStateSelected] = useState<string>();
-  const [modal, setModal] = useState(false);
+  const [stateSelected, setStateSelected] = useState<string>('por todos');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     async function init() {
-      const arrState = [
+      setState([
         'São paulo',
         'Rio de janeiro',
         'Minas gerais',
         'Espirito santo',
         'Bahia',
-      ];
+      ]);
+
+      console.log('iniciou');
 
       try {
-        const {data} = await api.get(`results?&_page=${page}&_limit=10`);
+        const response = await api.get('results');
+        const {data} = await api.get(`results?&_page=${page}&_limit=20`);
 
-        console.log(data.length);
-        setStateSelected('por todos');
-        setLen(data.length);
+        const result = response.data.length / 20;
+
+        setLen(result);
         setDataPerson(data);
       } catch (err) {
         console.log(err);
       }
-
-      setState(arrState);
 
       setLoading(true);
     }
     init();
   }, []);
 
-  async function fetchData(settingPage: string) {
-    const {data} = await api.get(`results?&_page=${settingPage}&_limit=10`);
-    setDataPerson(data);
-    setPage(Number(settingPage));
+  async function handleSubmit() {
+    if (inputState.length > 3) {
+      const {data} = await api.get(`results?name.first_like=${inputState}`);
+
+      if (data.length > 0) {
+        console.log(data, len, stateSelected);
+
+        setDataPerson(data);
+        setLen(0);
+        setPage(1);
+      } else {
+        setDataPerson([]);
+        setLen(0);
+      }
+    }
   }
+
+  async function fetchData(settingPage: string, stateCurrent: string) {
+    if (stateCurrent === 'por todos') {
+      const response = await api.get('results');
+
+      const {data} = await api.get(`results?&_page=${settingPage}&_limit=20`);
+      const result = Math.round(response.data.length / 20);
+
+      setLen(result);
+      setDataPerson(data);
+      setPage(Number(settingPage));
+      return;
+    }
+
+    if (stateCurrent === 'por homens') {
+      const response = await api.get('results?gender=male');
+
+      const {data} = await api.get(
+        `results?gender=male&_page=${settingPage}&_limit=20`,
+      );
+
+      const result = Math.round(response.data.length / 20);
+
+      setLen(result);
+      setDataPerson(data);
+      setPage(Number(settingPage));
+      return;
+    }
+
+    if (stateCurrent === 'por mulheres') {
+      const response = await api.get('results?gender=female');
+
+      const {data} = await api.get(
+        `results?gender=female&_page=${settingPage}&_limit=20`,
+      );
+
+      const result = Math.round(response.data.length / 20);
+
+      console.log(settingPage);
+      setLen(result);
+      setDataPerson(data);
+      setPage(Number(settingPage));
+      return;
+    }
+  }
+
   async function handleCheckBox(text: string) {
     if (checkedState && checkedState?.length > 0) {
       let arr: Props[] = [];
@@ -94,94 +152,75 @@ function Home() {
       }
 
       SetCheckedState(arr);
+      handleFetchState(arr);
     } else {
       SetCheckedState([{selected: text}]);
+      handleFetchState([{selected: text}]);
     }
   }
 
-  async function handleFetchMore(index: number) {
-    fetchData(index.toString());
+  async function handleFetchMore(index: any, stateCurrent: string) {
+    fetchData(String(index), stateCurrent);
   }
 
-  const SelectedBox = () => {
-    const arr: String[] = ['por todos', 'por homens', 'por mulheres'];
+  async function handleFetchState(value: Props[]) {
+    if (value.length > 0) {
+      console.log(value);
 
-    return (
-      <TouchableOpacity
-        onPress={() => setModal(!modal)}
-        style={
-          modal === true
-            ? styles.screenCheckBoxOpen
-            : styles.screenCheckBoxClose
-        }>
-        <FlatList
-          keyExtractor={(_, index) => index.toString()}
-          data={arr}
-          style={styles.modalOpenText}
-          renderItem={({item}) => (
-            <TouchableOpacity
-              onPress={() => {
-                setModal(!modal);
-                modal === true ? setStateSelected(String(item)) : null;
-              }}
-              style={
-                modal === false
-                  ? item === stateSelected
-                    ? styles.checkBoxSelected
-                    : styles.checkBox
-                  : styles.modalOpenCheckBoxSelected
-              }>
-              <Text
-                style={
-                  modal === true ? styles.modalOpenText : styles.modalCloseText
-                }>
-                {item}
-              </Text>
-              <Text>
-                {modal === false ? (
-                  <FontAwesomeIcon icon={faArrowDown} size={14} color="black" />
-                ) : null}
-              </Text>
-            </TouchableOpacity>
-          )}
-        />
-      </TouchableOpacity>
-    );
-  };
+      const arrString: Array<String> = [];
+
+      value.forEach((element, index) => {
+        index === 0
+          ? arrString.push(`location.state=${element.selected}`)
+          : arrString.push(`&location.state=${element.selected}`);
+      });
+
+      const stringParam = String(arrString)
+        .replaceAll(',', '')
+        .toLocaleLowerCase();
+      const {data} = await api.get(`results?${stringParam}`);
+
+      setLen(0);
+      setDataPerson(data);
+      return;
+    }
+  }
 
   return (
-    <View
-      style={{
-        padding: 17,
-        backgroundColor: 'whitesmoke',
-        borderWidth: 3,
-        flex: 1,
-      }}>
+    <View style={styles.container}>
       {loading === true ? (
         <>
-          <View style={styles.mainGrid}>
-            <TouchableOpacity style={styles.inputIcon}>
+          {/*INPUT*/}
+          <View style={styles.inputGroup}>
+            <TouchableOpacity style={styles.inputIcon} onPress={handleSubmit}>
               <FontAwesomeIcon icon={faSearch} size={15} color="black" />
             </TouchableOpacity>
-            <TextInput placeholder="Buscar..." style={styles.input} />
+            <TextInput
+              placeholder="Buscar..."
+              style={styles.input}
+              onChangeText={text => setInputState(text)}
+            />
           </View>
 
-          <SelectedBox />
+          {/*SELECT OPTION*/}
+          {stateSelected ? (
+            <SelectBox
+              stateSelected={stateSelected}
+              setStateSelected={setStateSelected}
+              handleFetchMore={handleFetchMore}
+              page={page}
+            />
+          ) : null}
 
-          <View
-            style={{
-              marginVertical: 10,
-              padding: 5,
-              borderColor: '#d3d3d3',
-              borderBottomWidth: 2,
-              backgroundColor: '#fff',
-            }}>
+          {/*INPUTION CHECKBOX*/}
+
+          <View style={styles.containerInputBox}>
             <FlatList
               keyExtractor={(item, index) => index.toString()}
               data={state}
               numColumns={2}
               renderItem={({item}) => (
-                <View
+                <TouchableOpacity
                   style={{
                     paddingVertical: 5,
                     flex: 1,
@@ -198,27 +237,42 @@ function Home() {
                     }}
                     onPress={() => handleCheckBox(item.toString())}
                   />
-                </View>
+                </TouchableOpacity>
               )}
             />
           </View>
+
+          {/*LIST USERS*/}
+
           {dataPerson && dataPerson?.length > 0 && len !== undefined ? (
-            <Pagination
+            <Users
               imageHeight={imageHeight}
               arrPerson={dataPerson}
               len={len}
               page={page}
               handleFetchMore={handleFetchMore}
             />
+          ) : null}
+
+          {/*PAGINATION*/}
+
+          {dataPerson && dataPerson?.length > 0 ? (
+            <Pagination
+              imageHeight={imageHeight}
+              len={len || 0}
+              page={page}
+              handleFetchMore={handleFetchMore}
+              stateSelected={stateSelected || ''}
+            />
           ) : (
             <View style={styles.listNotShow}>
-              <Text>Nenhuma lista a ser exibida</Text>
+              <Text>Infelizmente nada foi encontrado</Text>
             </View>
           )}
         </>
       ) : (
         <View>
-          <Text>Carregando...</Text>
+          <Text>Carregando.3..</Text>
         </View>
       )}
     </View>

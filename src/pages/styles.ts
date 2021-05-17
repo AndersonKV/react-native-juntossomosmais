@@ -4,7 +4,13 @@ const windowHeigth = Dimensions.get('screen').height;
 const windowWidth = Dimensions.get('window').width;
 
 export const styles = StyleSheet.create({
-  mainGrid: {
+  container: {
+    padding: 17,
+    backgroundColor: 'whitesmoke',
+    borderWidth: 3,
+    flex: 1,
+  },
+  inputGroup: {
     borderColor: 'rgba(211, 211, 211, 0.827)',
     borderWidth: 1,
     flexDirection: 'row',
@@ -25,17 +31,18 @@ export const styles = StyleSheet.create({
     borderBottomRightRadius: 30,
   },
   screenCheckBoxOpen: {
-    backgroundColor: 'rgba(52, 52, 52, 0.8)',
+    backgroundColor: 'rgba(52, 52, 52, 0.9)',
     width: windowWidth,
     height: windowHeigth,
     zIndex: 5,
     position: 'absolute',
   },
   screenCheckBoxClose: {
-    marginVertical: 10,
+    marginVertical: -5,
   },
   modalOpenText: {
     top: '30%',
+    textTransform: 'uppercase',
   },
   checkBoxSelected: {
     borderWidth: 1,
@@ -63,6 +70,7 @@ export const styles = StyleSheet.create({
   checkBox: {
     borderWidth: 1,
     display: 'none',
+    textTransform: 'uppercase',
   },
   listNotShow: {
     borderWidth: 1,
@@ -71,4 +79,13 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
   },
+  containerInputBox: {
+    marginVertical: '7%',
+    padding: 5,
+    borderColor: '#d3d3d3',
+    borderBottomWidth: 2,
+    backgroundColor: '#fff',
+  },
 });
+
+// <View style={{...styles.gridView}}>
