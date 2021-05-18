@@ -24,6 +24,11 @@ interface Props {
   selected: string;
 }
 
+interface InterfaceInputCheckBox {
+  name: string;
+  checked: boolean;
+}
+
 function Home() {
   const dimensions = Dimensions.get('window');
   const imageHeight = Math.round((dimensions.height * 9) / 16);
@@ -32,23 +37,30 @@ function Home() {
   const [inputState, setInputState] = useState<string>('');
   const [page, setPage] = useState(1);
   const [len, setLen] = useState<number>();
-  const [state, setState] = useState<String[]>();
-  const [checkedState, SetCheckedState] = useState<Props[]>();
+  const [state, setState] = useState<InterfaceInputCheckBox[]>();
+  const [inputChecked, setInputCheked] = useState<Props[]>();
+  const [falseCheckeds, setFalseChekeds] = useState(false);
   const [stateSelected, setStateSelected] = useState<string>('por todos');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     async function init() {
-      setState([
-        'São paulo',
-        'Rio de janeiro',
-        'Minas gerais',
-        'Espirito santo',
-        'Bahia',
-      ]);
+      const arr = [
+        {name: 'São paulo', checked: false},
+        {name: 'Rio de janeiro', checked: false},
+        {name: 'Minas gerais', checked: false},
+        {name: 'Espirito santo', checked: false},
+        {name: 'Bahia', checked: false},
+      ];
+
+      console.log(arr);
+      setState(arr);
+      // setState(
+      //   [name: 'São paulo', checked: false],
+
+      // );
 
       console.log('iniciou');
-
       try {
         const response = await api.get('results');
         const {data} = await api.get(`results?&_page=${page}&_limit=20`);
@@ -128,8 +140,8 @@ function Home() {
     }
   }
 
-  async function handleCheckBox(text: string) {
-    if (checkedState && checkedState?.length > 0) {
+  async function handleCheckBox(text: string, index: number) {
+    if (inputChecked && inputChecked?.length > 0) {
       let arr: Props[] = [];
 
       let verify = false;
@@ -138,8 +150,8 @@ function Home() {
       percorre o array adicionando os items ao novo array
       evitando algum estado que já exista
       */
-      checkedState &&
-        checkedState.forEach(element => {
+      inputChecked &&
+        inputChecked.forEach(element => {
           if (element.selected !== text) {
             arr.push({selected: element.selected});
           } else {
@@ -150,11 +162,16 @@ function Home() {
       if (verify === false) {
         arr.push({selected: text});
       }
+      const preUpdate: any = state && state[index];
+      preUpdate.checked = !preUpdate.checked;
 
-      SetCheckedState(arr);
+      setInputCheked(arr);
       handleFetchState(arr);
     } else {
-      SetCheckedState([{selected: text}]);
+      const preUpdate: any = state && state[index];
+      preUpdate.checked = !preUpdate.checked;
+
+      setInputCheked([{selected: text}]);
       handleFetchState([{selected: text}]);
     }
   }
@@ -164,9 +181,13 @@ function Home() {
   }
 
   async function handleFetchState(value: Props[]) {
-    if (value.length > 0) {
-      console.log(value);
+    if (value.length === 0) {
+      setLen(0);
+      setDataPerson([]);
+      return;
+    }
 
+    if (value.length > 0) {
       const arrString: Array<String> = [];
 
       value.forEach((element, index) => {
@@ -186,6 +207,12 @@ function Home() {
     }
   }
 
+  async function resetInputs() {
+    state &&
+      state.forEach(element => {
+        element.checked = false;
+      });
+  }
   return (
     <View style={styles.container}>
       {loading === true ? (
@@ -209,6 +236,10 @@ function Home() {
               setStateSelected={setStateSelected}
               handleFetchMore={handleFetchMore}
               page={page}
+              resetInputs={resetInputs}
+              setInputCheked={setInputCheked}
+              falseCheckeds={falseCheckeds}
+              setFalseChekeds={setFalseChekeds}
             />
           ) : null}
 
@@ -219,24 +250,22 @@ function Home() {
               keyExtractor={(item, index) => index.toString()}
               data={state}
               numColumns={2}
-              renderItem={({item}) => (
+              extraData={state}
+              renderItem={({item, index}) => (
                 <TouchableOpacity
-                  style={{
-                    paddingVertical: 5,
-                    flex: 1,
-                  }}>
-                  <BouncyCheckbox
-                    size={25}
-                    fillColor="gray"
-                    unfillColor="#FFFFFF"
-                    text={`${item}`}
-                    iconStyle={{borderColor: '#d3d3d3'}}
-                    textStyle={{
-                      fontFamily: 'JosefinSans-Regular',
-                      textDecorationLine: 'none',
-                    }}
-                    onPress={() => handleCheckBox(item.toString())}
-                  />
+                  onPress={() => {
+                    handleCheckBox(item.name, index);
+                  }}
+                  style={styles.containerInputChecked}>
+                  {item.checked === true ? (
+                    <View style={styles.inputCheckedActive} />
+                  ) : (
+                    <View style={styles.inputChecked} />
+                  )}
+
+                  <Text>
+                    {item.name} - {index}
+                  </Text>
                 </TouchableOpacity>
               )}
             />

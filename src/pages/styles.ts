@@ -86,6 +86,30 @@ export const styles = StyleSheet.create({
     borderBottomWidth: 2,
     backgroundColor: '#fff',
   },
+  containerInputChecked: {
+    paddingVertical: 5,
+    flex: 1,
+    flexDirection: 'row',
+    alignContent: 'center',
+    alignItems: 'center',
+  },
+  inputChecked: {
+    backgroundColor: 'white',
+    width: 15,
+    height: 15,
+    borderRadius: 50,
+    borderWidth: 1,
+    marginRight: 10,
+  },
+  inputCheckedActive: {
+    backgroundColor: '#00FFFF',
+    borderColor: 'green',
+    width: 15,
+    height: 15,
+    borderRadius: 50,
+    borderWidth: 1,
+    marginRight: 10,
+  },
 });
 
 // <View style={{...styles.gridView}}>

@@ -1,14 +1,22 @@
 import React, {useState} from 'react';
+
 import {Text, TouchableOpacity, FlatList} from 'react-native';
 import {faArrowDown} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {styles} from '../pages/styles';
+
+interface InterfaceInputCheckBox {
+  name: string;
+  checked: boolean;
+  forEach: [{name: string; checked: boolean}];
+}
 
 interface Props {
   stateSelected: string;
   setStateSelected: (arg: string) => void;
   handleFetchMore: (arg: string, arg2: string) => void;
   page: number;
+  resetInputs: () => void;
 }
 
 function SelectBox({
@@ -16,20 +24,19 @@ function SelectBox({
   setStateSelected,
   handleFetchMore,
   page,
+  resetInputs,
 }: Props) {
   const arr: String[] = ['por todos', 'por homens', 'por mulheres'];
   const [modal, setModal] = useState(false);
 
   function handleSelectOption(item: string) {
     if (modal === true) {
-      console.log('page ' + page);
-      console.log('item ' + item);
       setStateSelected(item);
       handleFetchMore(String(page), item);
-    } else {
-      console.log;
+      resetInputs();
     }
   }
+
   return (
     <TouchableOpacity
       onPress={() => setModal(!modal)}
